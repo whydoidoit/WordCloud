@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 using System.Windows;
@@ -14,7 +16,7 @@ namespace WordCloudControl
     {
         // Using a DependencyProperty as the backing store for Entries.  This enables animation, styling, binding, etc...
         public static readonly DependencyProperty EntriesProperty =
-            DependencyProperty.Register("Entries", typeof(IList<WordCloudEntry>), typeof(WordCloud), new PropertyMetadata(new List<WordCloudEntry>(), EntriesChanged));
+            DependencyProperty.Register("Entries", typeof(ObservableCollection<WordCloudEntry>), typeof(WordCloud), new PropertyMetadata(new ObservableCollection<WordCloudEntry>(), EntriesChanged));
 
         public static readonly DependencyProperty LargestSizeWidthProportionProperty =
             DependencyProperty.Register("LargestSizeWidthProportion", typeof(double), typeof(WordCloud), new PropertyMetadata(0.50, LargestSizeWidthProportionChanged));
@@ -29,7 +31,7 @@ namespace WordCloudControl
             DependencyProperty.Register("MaxWords", typeof(int), typeof(WordCloud), new PropertyMetadata(150, MaxWordsChanged));
 
         public static readonly DependencyProperty SelectedItemsProperty =
-            DependencyProperty.Register("SelectedItems", typeof(List<int>), typeof(WordCloud), new PropertyMetadata(new List<int>(), SelectedItemsChanged));
+            DependencyProperty.Register("SelectedItems", typeof(ObservableCollection<int>), typeof(WordCloud), new PropertyMetadata(new ObservableCollection<int>(), SelectedItemsChanged));
 
         public static readonly DependencyProperty SelectedColorProperty =
             DependencyProperty.Register("SelectedColor", typeof(Brush), typeof(WordCloud), new PropertyMetadata(new SolidColorBrush(Colors.White), SelectedColorChanged));
@@ -65,11 +67,17 @@ namespace WordCloudControl
         private Random _random;
         private WriteableBitmap _source;
 
+        private INotifyCollectionChanged _entries;
+        private INotifyCollectionChanged _selected;
+
+
 
         public WordCloud()
         {
             DefaultStyleKey = typeof(WordCloud);
             _timer.Tick += TimerTick;
+            OnEntriesChanged(new DependencyPropertyChangedEventArgs());
+            OnSelectedItemsChanged(new DependencyPropertyChangedEventArgs());
         }
 
         public double AngleCenterValue
@@ -78,16 +86,16 @@ namespace WordCloudControl
             set { SetValue(AngleCenterValueProperty, value); }
         }
 
-        public IList<WordCloudEntry> Entries
+        public ObservableCollection<WordCloudEntry> Entries
         {
-            get { return (IList<WordCloudEntry>)GetValue(EntriesProperty); }
+            get { return (ObservableCollection<WordCloudEntry>)GetValue(EntriesProperty); }
             set { SetValue(EntriesProperty, value); }
         }
 
 
-        public List<int> SelectedItems
+        public ObservableCollection<int> SelectedItems
         {
-            get { return (List<int>)GetValue(SelectedItemsProperty); }
+            get { return (ObservableCollection<int>)GetValue(SelectedItemsProperty); }
             set { SetValue(SelectedItemsProperty, value); }
         }
 
@@ -237,6 +245,14 @@ namespace WordCloudControl
 
         protected void OnSelectedItemsChanged(DependencyPropertyChangedEventArgs e)
         {
+            if (_selected != null)
+            {
+                _selected.CollectionChanged -= EntriesCollectionChanged;
+            }
+
+            _selected = SelectedItems;
+            _selected.CollectionChanged += EntriesCollectionChanged;
+
             RegenerateCloud();
         }
 
@@ -249,6 +265,19 @@ namespace WordCloudControl
         }
 
         protected void OnEntriesChanged(DependencyPropertyChangedEventArgs e)
+        {
+            if (_entries != null)
+            {
+                _entries.CollectionChanged -= EntriesCollectionChanged;
+            }
+
+            _entries = Entries;
+            _entries.CollectionChanged += EntriesCollectionChanged;
+
+            RegenerateCloud();
+        }
+
+        void EntriesCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
             RegenerateCloud();
         }
