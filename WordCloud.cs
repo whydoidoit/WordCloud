@@ -32,7 +32,7 @@ namespace WordCloudControl
             DependencyProperty.Register("SelectedItems", typeof(List<int>), typeof(WordCloud), new PropertyMetadata(new List<int>(), SelectedItemsChanged));
 
         public static readonly DependencyProperty SelectedColorProperty =
-            DependencyProperty.Register("SelectedColor", typeof(SolidColorBrush), typeof(WordCloud), new PropertyMetadata(new SolidColorBrush(Colors.White), SelectedColorChanged));
+            DependencyProperty.Register("SelectedColor", typeof(Brush), typeof(WordCloud), new PropertyMetadata(new SolidColorBrush(Colors.White), SelectedColorChanged));
 
         public static readonly DependencyProperty FromAlphaProperty =
             DependencyProperty.Register("FromAlpha", typeof(int), typeof(WordCloud), new PropertyMetadata(0x40, FromAlphaChanged));
@@ -119,9 +119,9 @@ namespace WordCloudControl
             set { SetValue(MaxWordsProperty, value); }
         }
 
-        public SolidColorBrush SelectedColor
+        public Brush SelectedColor
         {
-            get { return (SolidColorBrush)GetValue(SelectedColorProperty); }
+            get { return (Brush)GetValue(SelectedColorProperty); }
             set { SetValue(SelectedColorProperty, value); }
         }
 
